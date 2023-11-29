@@ -69,10 +69,9 @@ static BOOL backgroundIsolateRun = NO;
     result(@([self removeGeofence:arguments]));
   } else if ([@"GeofencingPlugin.getRegisteredGeofenceIds" isEqualToString:call.method]) {
       result([self getMonitoredRegionIds:arguments]);
-  } else if ([@"GeofencingPlugin.getRegisteredGeofenceRegions" isEqualToString:call.method]) {
-      result([self getMonitoredRegions:arguments]);
-  } else {
-      result(FlutterMethodNotImplemented);
+  }
+  else {
+    result(FlutterMethodNotImplemented);
   }
 }
 
@@ -150,12 +149,12 @@ static BOOL backgroundIsolateRun = NO;
   _headlessRunner = [[FlutterEngine alloc] initWithName:@"GeofencingIsolate" project:nil allowHeadlessExecution:YES];
   _registrar = registrar;
 
-  _mainChannel = [FlutterMethodChannel methodChannelWithName:@"plugins.cloudalert.eu/geofencing_plugin"
+  _mainChannel = [FlutterMethodChannel methodChannelWithName:@"plugins.flutter.io/geofencing_plugin"
                                              binaryMessenger:[registrar messenger]];
   [registrar addMethodCallDelegate:self channel:_mainChannel];
 
   _callbackChannel =
-      [FlutterMethodChannel methodChannelWithName:@"plugins.cloudalert.eu/geofencing_plugin_background"
+      [FlutterMethodChannel methodChannelWithName:@"plugins.flutter.io/geofencing_plugin_background"
                                   binaryMessenger:_headlessRunner];
   return self;
 }
@@ -197,7 +196,6 @@ static BOOL backgroundIsolateRun = NO;
   
   [self setCallbackHandleForRegionId:callbackHandle regionId:identifier];
   [self->_locationManager startMonitoringForRegion:region];
-  [self->_locationManager requestStateForRegion:region];
 }
 
 - (BOOL)removeGeofence:(NSArray *)arguments {
@@ -212,58 +210,12 @@ static BOOL backgroundIsolateRun = NO;
   return NO;
 }
 
-- (void)locationManager:(CLLocationManager *)manager
-  didDetermineState:(CLRegionState)state forRegion:(CLRegion *)region {
-    if (state == CLRegionStateInside) {
-        if (initialized) {
-          [self sendLocationEvent:region eventType:kEnterEvent];
-        } else {
-          NSDictionary *dict = @{
-            kRegionKey: region,
-            kEventType: @(kEnterEvent)
-          };
-          [_eventQueue addObject:dict];
-        }
-    } else if (state == CLRegionStateOutside) {
-        if (initialized) {
-            [self sendLocationEvent:region eventType:kExitEvent];
-        } else {
-          NSDictionary *dict = @{
-            kRegionKey: region,
-            kEventType: @(kExitEvent)
-          };
-          [_eventQueue addObject:dict];
-        }
-    } else if (state == CLRegionStateUnknown) {
-        NSLog(@"Unknown state for geofence: %@", region);
-        return;
-    }
-}
-
-- (NSArray*)getMonitoredRegionIds:()arguments{
+-(NSArray*)getMonitoredRegionIds:()arguments{
     NSMutableArray *geofenceIds = [[NSMutableArray alloc] init];
     for (CLRegion *region in [self->_locationManager monitoredRegions]) {
         [geofenceIds addObject:region.identifier];
     }
     return [NSArray arrayWithArray:geofenceIds];
-}
-
-- (NSArray*)getMonitoredRegions:()arguments{
-    NSMutableArray *geofences = [[NSMutableArray alloc] init];
-    for (CLCircularRegion *region in [self->_locationManager monitoredRegions]) {
-
-        NSString *latitude = [[NSNumber numberWithDouble:region.center.latitude] stringValue];
-        NSString *longitude = [[NSNumber numberWithDouble:region.center.longitude] stringValue];
-        NSString *radius = [[NSNumber numberWithDouble:region.radius] stringValue];
-        id objects[] = {region.identifier, latitude, longitude, radius};
-        id keys[] = {@"id", @"lat", @"long", @"radius"};
-        NSUInteger count = sizeof(objects) / sizeof(id);
-
-        NSDictionary *dict = [NSDictionary dictionaryWithObjects:objects forKeys:keys count:count];
-        [geofences addObject:dict];
-    }
-    return [NSArray arrayWithArray:geofences];
-
 }
 
 - (int64_t)getCallbackDispatcherHandle {

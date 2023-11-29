@@ -1,4 +1,4 @@
-**Author's Note:** this plugin is not officially supported. Please feel free to pull it into your own projects, but _there is no official version hosted on pub.dev and support may be limited_. If you run into any issues running this sample, please file an issue or, even better, submit a pull request!
+**Author's Note:** this plugin is not officially supported and is meant to be used as an example. Please feel free to pull it into your own projects, but _there is no official version hosted on pub.dev and support may be limited_. If you run into any issues running this sample, please file an issue or, even better, submit a pull request!
 
 What is geofencing? 
 [here](https://developer.android.com/training/location/geofencing)
@@ -13,71 +13,7 @@ platforms which are to be targeted.
 
 ### Android
 
-Add the following lines to your `AndroidManifest.xml` to register the background service for
-geofencing:
-
-```xml
-<receiver android:name="io.flutter.plugins.geofencing.GeofencingBroadcastReceiver"
-    android:enabled="true" android:exported="true"/>
-
-<service android:name="io.flutter.plugins.geofencing.GeofencingService"
-    android:permission="android.permission.BIND_JOB_SERVICE" android:exported="true"/>
-
-<receiver android:name="io.flutter.plugins.geofencing.GeofencingRebootBroadcastReceiver"
-    android:enabled="true" android:exported="true" android:label="BootReceiver">
-    <intent-filter>
-        <action android:name="android.intent.action.BOOT_COMPLETED"/>
-    </intent-filter>
-</receiver>
-```
-
-Also request the correct permissions for geofencing:
-
-```xml
-<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION_LOCATION"/>
-<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-<uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-```
-
-Finally, create either `Application.kt` or `Application.java` in the same directory as `MainActivity`.
- 
-For `Application.kt`, use the following:
-
-```kotlin
-class Application : FlutterApplication(), PluginRegistrantCallback {
-  override fun onCreate() {
-    super.onCreate();
-    GeofencingService.setPluginRegistrant(this);
-  }
-
-  override fun registerWith(registry: PluginRegistry) {
-  }
-}
-```
-
-For `Application.java`, use the following:
-
-```java
-public class Application extends FlutterApplication implements PluginRegistrantCallback {
-  @Override
-  public void onCreate() {
-    super.onCreate();
-    GeofencingService.setPluginRegistrant(this);
-  }
-
-  @Override
-  public void registerWith(PluginRegistry registry) {
-  }
-}
-```
-
-Which must also be referenced in `AndroidManifest.xml`:
-
-```xml
-    <application
-        android:name=".Application"
-        ...
-```
+No additional setup required.
  
 ### iOS
 

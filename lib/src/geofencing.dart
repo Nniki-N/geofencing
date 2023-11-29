@@ -99,9 +99,9 @@ class GeofenceRegion {
 
 class GeofencingManager {
   static const MethodChannel _channel =
-      MethodChannel('plugins.cloudalert.eu/geofencing_plugin');
+      MethodChannel('plugins.flutter.io/geofencing_plugin');
   static const MethodChannel _background =
-      MethodChannel('plugins.cloudalert.eu/geofencing_plugin_background');
+      MethodChannel('plugins.flutter.io/geofencing_plugin_background');
 
   /// Initialize the plugin and request relevant permissions from the user.
   static Future<void> initialize() async {
@@ -153,36 +153,22 @@ class GeofencingManager {
     await _channel.invokeMethod('GeofencingPlugin.registerGeofence', args);
   }
 
-  /// reRegister geofences after reboot.
-  /// This function can be called when the autostart feature is not working
-  /// as it should. This way you can handle that case from the app.
-  static Future<void> reRegisterAfterReboot() async =>
-      await _channel.invokeMethod('GeofencingPlugin.reRegisterAfterReboot');
-
   /// get all geofence identifiers
   static Future<List<String>> getRegisteredGeofenceIds() async =>
       List<String>.from(await _channel
           .invokeMethod('GeofencingPlugin.getRegisteredGeofenceIds'));
 
-  /// get all geofence regions and their properties
-  /// returns a [Map] with the following keys
-  /// [id] the identifier
-  /// [lat] latitude
-  /// [long] longitude
-  /// [radius] radius
-  ///
-  /// if there are no geofences registered it returns []
-  static Future<List<Map<dynamic, dynamic>>>
-  getRegisteredGeofenceRegions() async =>
-      List<Map<dynamic, dynamic>>.from(await _channel
-          .invokeMethod('GeofencingPlugin.getRegisteredGeofenceRegions'));
-
   /// Stop receiving geofence events for a given [GeofenceRegion].
-  static Future<bool> removeGeofence(GeofenceRegion region) async =>
-      (region == null) ? false : await removeGeofenceById(region.id);
+  static Future<void> removeGeofence(GeofenceRegion region) async {
+    if (region != null) {
+      await removeGeofenceById(region.id);
+    }
+  }
 
   /// Stop receiving geofence events for an identifier associated with a
   /// geofence region.
-  static Future<bool> removeGeofenceById(String id) async => await _channel
-      .invokeMethod('GeofencingPlugin.removeGeofence', <dynamic>[id]);
+  static Future<void> removeGeofenceById(String id) async {
+    await _channel
+        .invokeMethod('GeofencingPlugin.removeGeofence', <dynamic>[id]);
+  }
 }
