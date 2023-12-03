@@ -75,47 +75,33 @@ class GeofencingService : MethodCallHandler, JobIntentService() {
         synchronized(sServiceStarted) {
             mContext = context
             if (sBackgroundFlutterEngine == null) {
-                // sBackgroundFlutterEngine = FlutterEngine(context)
+                sBackgroundFlutterEngine = FlutterEngine(context)
 
-                // val callbackHandle = context.getSharedPreferences(
-                //     GeofencingPlugin.SHARED_PREFERENCES_KEY,
-                //     Context.MODE_PRIVATE
-                // )
-                //     .getLong(GeofencingPlugin.CALLBACK_DISPATCHER_HANDLE_KEY, 0)
-                // if (callbackHandle == 0L) {
-                //     Log.e(TAG, "Fatal: no callback registered")
-                //     return
-                // }
-                
-                // // Log.i(TAG, "Starting GeofencingService...0")
+                val callbackHandle = context.getSharedPreferences(
+                    GeofencingPlugin.SHARED_PREFERENCES_KEY,
+                    Context.MODE_PRIVATE
+                )
+                    .getLong(GeofencingPlugin.CALLBACK_DISPATCHER_HANDLE_KEY, 0)
+                if (callbackHandle == 0L) {
+                    Log.e(TAG, "Fatal: no callback registered")
+                    return
+                }
 
-                // val callbackInfo =
-                //     FlutterCallbackInformation.lookupCallbackInformation(callbackHandle)
-                // if (callbackInfo == null) {
-                //     Log.e(TAG, "Fatal: failed to find callback")
-                //     return
-                // }
-                // // Log.i(TAG, "Starting GeofencingService...0")
-                // // Log.i(TAG, "Starting GeofencingService...")
-                // // Log.i(TAG, "Starting GeofencingService...0")
-
-                // val args = DartCallback(
-                //     context.getAssets(),
-                //     FlutterMain.findAppBundlePath(context)!!,
-                //     callbackInfo
-                // )
-                // Log.i(TAG, "setUp DartCallback...")
-                
-                // sBackgroundFlutterEngine!!.getDartExecutor().executeDartCallback(args)
-                // IsolateHolderService.setBackgroundFlutterEngine(sBackgroundFlutterEngine)
-                // // startLocationUpdates()
-                
-                // Log.i(TAG, "setUp sBackgroundFlutterEngine...")
-
-                // val intent = Intent(mContext, IsolateHolderService::class.java)
-                // intent.setAction(IsolateHolderService.ACTION_SHUTDOWN)
-                // mContext.startForegroundService(intent)
-                // Log.i(TAG, "startForegroundService...")
+                val callbackInfo =
+                    FlutterCallbackInformation.lookupCallbackInformation(callbackHandle)
+                if (callbackInfo == null) {
+                    Log.e(TAG, "Fatal: failed to find callback")
+                    return
+                }
+                Log.i(TAG, "Starting GeofencingService...")
+                val args = DartCallback(
+                    context.getAssets(),
+                    FlutterMain.findAppBundlePath(context)!!,
+                    callbackInfo
+                )
+                sBackgroundFlutterEngine!!.getDartExecutor().executeDartCallback(args)
+                IsolateHolderService.setBackgroundFlutterEngine(sBackgroundFlutterEngine)
+                Log.i(TAG, "Starting GeofencingService...IsolateHolderService")
             }
         }
         mBackgroundChannel = MethodChannel(
@@ -125,7 +111,7 @@ class GeofencingService : MethodCallHandler, JobIntentService() {
         mBackgroundChannel.setMethodCallHandler(this)
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
+     @RequiresApi(Build.VERSION_CODES.O)
     override fun onMethodCall(call: MethodCall, result: Result) {
         when (call.method) {
             "GeofencingService.initialized" -> {
@@ -153,22 +139,6 @@ class GeofencingService : MethodCallHandler, JobIntentService() {
         super.onCreate()
         Log.i(TAG, "GeofencingService onCreate...")
         startGeofencingService(this)
-
-        // Start IsolateHolderService
-        val isolateServiceIntent = Intent(this, IsolateHolderService::class.java)
-        startService(isolateServiceIntent)
-        Log.i(TAG, "GeofencingService onCreate after startService...")
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.i(TAG, "GeofencingService onDestroy...")
-
-        // Stop IsolateHolderService
-        val isolateServiceIntent = Intent(this, IsolateHolderService::class.java)
-        isolateServiceIntent.action = IsolateHolderService.ACTION_SHUTDOWN
-        startService(isolateServiceIntent)
-        Log.i(TAG, "GeofencingService onDestroy after startService...")
     }
 
     override fun onHandleWork(intent: Intent) {
@@ -179,7 +149,7 @@ class GeofencingService : MethodCallHandler, JobIntentService() {
             Log.e(TAG, "Geofencing error: ${geofencingEvent.errorCode}")
             return
         }
-
+        
         // Get the transition type.
         val geofenceTransition = geofencingEvent.geofenceTransition
 

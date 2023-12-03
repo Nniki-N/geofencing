@@ -10,7 +10,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
-import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
 import com.google.android.gms.location.GeofencingRequest
@@ -227,7 +226,6 @@ class GeofencingPlugin : ActivityAware, FlutterPlugin, MethodChannel.MethodCallH
 
             // get geo client
             mGeofencingClient = LocationServices.getGeofencingClient(mContext!!)
-            LocationRequest.setSmallestDisplacement(20)
 
             // deserialize all cached geofences
             for (id in persistentGeofences) {
@@ -352,7 +350,6 @@ class GeofencingPlugin : ActivityAware, FlutterPlugin, MethodChannel.MethodCallH
     fun onAttachedContext(context: Context) {
         mContext = context
         mGeofencingClient = LocationServices.getGeofencingClient(context)
-        LocationRequest.setSmallestDisplacement(20)
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
