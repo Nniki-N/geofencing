@@ -44,7 +44,7 @@ static BOOL backgroundIsolateRun = NO;
 - (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
   NSArray *arguments = call.arguments;
   if ([@"GeofencingPlugin.initializeService" isEqualToString:call.method]) {
-    NSAssert(arguments.count == 1,
+    NSAssert(arguments.count >= 1,
              @"Invalid argument count for 'GeofencingPlugin.initializeService'");
     [self startGeofencingService:[arguments[0] longValue]];
     result(@(YES));

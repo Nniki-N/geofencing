@@ -104,12 +104,26 @@ class GeofencingManager {
       MethodChannel('plugins.flutter.io/geofencing_plugin_background');
 
   /// Initialize the plugin and request relevant permissions from the user.
-  static Future<void> initialize() async {
+  /// [androidTimeInterval] is set in milliseconds. By default 5000 milliseconds
+  /// [androidFastestTimeInterval] is set in milliseconds. By default 5000 milliseconds
+  /// [androidSmallestDisplacement] is set in meters. By default 0
+  static Future<void> initialize({
+    int androidTimeInterval = 5000,
+    int androidFastestTimeInterval = 5000,
+    double androidSmallestDisplacement = 0,
+  }) async {
     final CallbackHandle? callback =
         PluginUtilities.getCallbackHandle(callbackDispatcher);
     if (callback != null) {
-      await _channel.invokeMethod('GeofencingPlugin.initializeService',
-          <dynamic>[callback.toRawHandle()]);
+      await _channel.invokeMethod(
+        'GeofencingPlugin.initializeService',
+        <dynamic>[
+          callback.toRawHandle(),
+          androidTimeInterval,
+          androidFastestTimeInterval,
+          androidSmallestDisplacement,
+        ],
+      );
     }
   }
 
@@ -160,10 +174,8 @@ class GeofencingManager {
 
   /// Stop receiving geofence events for a given [GeofenceRegion].
   static Future<void> removeGeofence(GeofenceRegion region) async {
-    if (region != null) {
-      await removeGeofenceById(region.id);
+    await removeGeofenceById(region.id);
     }
-  }
 
   /// Stop receiving geofence events for an identifier associated with a
   /// geofence region.

@@ -4,13 +4,6 @@
 
 package io.flutter.plugins.geofencing
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.Service
-import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
-
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -93,7 +86,9 @@ class GeofencingService : MethodCallHandler, JobIntentService() {
                     Log.e(TAG, "Fatal: failed to find callback")
                     return
                 }
+                
                 Log.i(TAG, "Starting GeofencingService...")
+
                 val args = DartCallback(
                     context.getAssets(),
                     FlutterMain.findAppBundlePath(context)!!,
@@ -101,7 +96,6 @@ class GeofencingService : MethodCallHandler, JobIntentService() {
                 )
                 sBackgroundFlutterEngine!!.getDartExecutor().executeDartCallback(args)
                 IsolateHolderService.setBackgroundFlutterEngine(sBackgroundFlutterEngine)
-                Log.i(TAG, "Starting GeofencingService...IsolateHolderService")
             }
         }
         mBackgroundChannel = MethodChannel(
@@ -137,7 +131,6 @@ class GeofencingService : MethodCallHandler, JobIntentService() {
 
     override fun onCreate() {
         super.onCreate()
-        Log.i(TAG, "GeofencingService onCreate...")
         startGeofencingService(this)
     }
 
@@ -188,78 +181,5 @@ class GeofencingService : MethodCallHandler, JobIntentService() {
     }
 
     
-    // private val LOCATION_UPDATE_INTERVAL = 10 * 1000L // 30 seconds
-    // private val LOCATION_UPDATE_FASTEST_INTERVAL = 10 * 1000L // 15 seconds
-
-    // private var mLocationManager: LocationManager? = null
-    // private var mLocationListener: LocationListener? = null
-
-    // private fun startLocationUpdates() {
-    //     if (mLocationManager == null) {
-    //         mLocationManager = mContext?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-    //         mLocationListener = object : LocationListener {
-    //             override fun onLocationChanged(location: Location) {
-    //                 // Handle location updates here
-    //                 Log.i(TAG, "Location Update: $location")
-
-    //                 showLocationNotification(location)
-    //             }
-
-    //             override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
-    //             }
-
-    //             override fun onProviderEnabled(provider: String) {
-    //             }
-
-    //             override fun onProviderDisabled(provider: String) {
-    //             }
-    //         }
-    //     }
-
-    //     try {
-    //         mLocationManager?.requestLocationUpdates(
-    //             LocationManager.NETWORK_PROVIDER,
-    //             LOCATION_UPDATE_INTERVAL,
-    //             0f,
-    //             mLocationListener!!,
-    //             Looper.getMainLooper()
-    //         )
-    //     } catch (e: SecurityException) {
-    //         Log.e(TAG, "Error requesting location updates: $e")
-    //     }
-    // }
-
-    // private fun stopLocationUpdates() {
-    //     mLocationManager?.removeUpdates(mLocationListener!!)
-    // }
-
-    // // Внутри класса GeofencingService, добавьте следующий метод
-    // private fun showLocationNotification(location: Location) {
-    //     val notificationManager =
-    //         mContext!!.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-    //     // ID уведомления
-    //     val notificationId = 7
-
-    //     // Создание канала уведомлений (требуется для Android 8.0 и выше)
-    //     val channelId = "LocationUpdates"
-    //     val channelName = "Location Updates"
-    //     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-    //         val channel = NotificationChannel(
-    //             channelId,
-    //             channelName,
-    //             NotificationManager.IMPORTANCE_DEFAULT
-    //         )
-    //         notificationManager.createNotificationChannel(channel)
-    //     }
-
-    //     // Создание уведомления
-    //     val notificationBuilder = NotificationCompat.Builder(mContext!!, channelId)
-    //         .setContentTitle("Location Update")
-    //         .setContentText("Lat: ${location.latitude}, Long: ${location.longitude}")
-    //         .setSmallIcon(android.R.drawable.ic_dialog_alert) // Замените на вашу иконку уведомления
-
-    //     // Отображение уведомления
-    //     notificationManager.notify(notificationId, notificationBuilder.build())
-    // }
+    
 }

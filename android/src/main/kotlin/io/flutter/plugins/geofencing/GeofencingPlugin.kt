@@ -4,6 +4,18 @@
 
 package io.flutter.plugins.geofencing
 
+import android.os.Bundle
+import android.os.Looper
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationRequest;
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import androidx.core.app.NotificationCompat
+import android.location.Location
+
 import android.app.Activity
 import android.app.PendingIntent
 import android.content.Context
@@ -57,12 +69,21 @@ class GeofencingPlugin : ActivityAware, FlutterPlugin, MethodChannel.MethodCallH
     /**
      * Registers a Dart callback function to call when a geofence is discovered.
      */
-    private fun initializeService(callbackHandle: Long) {
+    private fun initializeService(
+        callbackHandle: Long,
+        timeInterval: Int,
+        fastestTimeInterval: Int,
+        smallestDisplacement: Float,
+    ) {
         Log.d(TAG, "Initializing GeofencingService")
         mContext?.getSharedPreferences(SHARED_PREFERENCES_KEY, Context.MODE_PRIVATE)
             ?.edit()
             ?.putLong(CALLBACK_DISPATCHER_HANDLE_KEY, callbackHandle)
             ?.apply()
+
+        mActivity?.let { activity ->
+            initializeLocationUpdates(timeInterval, fastestTimeInterval, smallestDisplacement)
+        }
     }
 
     private fun registerGeofenceWithArgs(
@@ -387,7 +408,14 @@ class GeofencingPlugin : ActivityAware, FlutterPlugin, MethodChannel.MethodCallH
                     return
                 }
                 val callbackHandle = args[0] as Long
-                initializeService(callbackHandle)
+                val timeInterval = args[1] as Int
+                val fastestTimeInterval = args[2] as Int
+                val smallestDisplacement = (args[3] as Number).toFloat()
+                
+                Log.d(TAG, timeInterval.toString())
+                Log.d(TAG, smallestDisplacement.toString())
+
+                initializeService(callbackHandle, timeInterval, fastestTimeInterval, smallestDisplacement)
                 result.success(null)
             }
             "GeofencingPlugin.registerGeofence" -> {
@@ -417,5 +445,78 @@ class GeofencingPlugin : ActivityAware, FlutterPlugin, MethodChannel.MethodCallH
             )
             else -> result.notImplemented()
         }
+    }
+
+    private lateinit var mFusedLocationClient: FusedLocationProviderClient
+    private lateinit var mLocationCallback: LocationCallback
+
+    private fun initializeLocationUpdates(
+        timeInterval: Int,
+        fastestTimeInterval: Int,
+        smallestDisplacement: Float,
+    ) {
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(mActivity!!)
+
+        mLocationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult) {
+                locationResult.lastLocation?.let { location ->
+                    Log.i(TAG, "Location Update: $location")
+                    showLocationNotification(location)
+                }
+            }
+        }
+
+        startLocationUpdates(timeInterval, fastestTimeInterval, smallestDisplacement)
+    }
+
+    private fun startLocationUpdates(
+        timeInterval: Int,
+        fastestTimeInterval: Int,
+        smallestDisplacement: Float,
+    ) {
+        val locationRequest = LocationRequest.create()
+            .setInterval(timeInterval * 1L)
+            .setFastestInterval(fastestTimeInterval * 1L)
+            .setSmallestDisplacement(smallestDisplacement)
+            .setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY)
+
+        try {
+            mFusedLocationClient.requestLocationUpdates(
+                locationRequest,
+                mLocationCallback,
+                Looper.getMainLooper()
+            )
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Error requesting location updates: $e")
+        }
+    }
+
+    private fun stopLocationUpdates() {
+        mFusedLocationClient.removeLocationUpdates(mLocationCallback)
+    }
+
+    private fun showLocationNotification(location: Location) {
+        val notificationManager =
+            mContext!!.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        val notificationId = 7
+
+        val channelId = "LocationUpdates"
+        val channelName = "Location Updates"
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                channelName,
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val notificationBuilder = NotificationCompat.Builder(mContext!!, channelId)
+            .setContentTitle("Location Update")
+            .setContentText("Lat: ${location.latitude}, Long: ${location.longitude}")
+            .setSmallIcon(android.R.drawable.ic_dialog_alert)
+
+        notificationManager.notify(notificationId, notificationBuilder.build())
     }
 }
