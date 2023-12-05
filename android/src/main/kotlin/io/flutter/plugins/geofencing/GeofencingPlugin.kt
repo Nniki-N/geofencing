@@ -69,12 +69,7 @@ class GeofencingPlugin : ActivityAware, FlutterPlugin, MethodChannel.MethodCallH
     /**
      * Registers a Dart callback function to call when a geofence is discovered.
      */
-    private fun initializeService(
-        callbackHandle: Long,
-        timeInterval: Int,
-        fastestTimeInterval: Int,
-        smallestDisplacement: Float,
-    ) {
+    private fun initializeService(callbackHandle: Long) {
         Log.d(TAG, "Initializing GeofencingService")
         mContext?.getSharedPreferences(SHARED_PREFERENCES_KEY, Context.MODE_PRIVATE)
             ?.edit()
@@ -82,7 +77,9 @@ class GeofencingPlugin : ActivityAware, FlutterPlugin, MethodChannel.MethodCallH
             ?.apply()
 
         mActivity?.let { activity ->
-            initializeLocationUpdates(timeInterval, fastestTimeInterval, smallestDisplacement)
+            Log.d(TAG, "initializeService before initializeLocationUpdates")
+            initializeLocationUpdates()
+            Log.d(TAG, "initializeService after initializeLocationUpdates")
         }
     }
 
@@ -266,6 +263,10 @@ class GeofencingPlugin : ActivityAware, FlutterPlugin, MethodChannel.MethodCallH
                     null
                 )
             }
+
+            Log.d(TAG, "reRegisterAfterReboot before initializeLocationUpdates")
+            initializeLocationUpdates()
+            Log.d(TAG, "reRegisterAfterReboot after initializeLocationUpdates")
         }
     }
 
@@ -380,6 +381,9 @@ class GeofencingPlugin : ActivityAware, FlutterPlugin, MethodChannel.MethodCallH
     private fun onDetachedContext() {
         mContext = null
         mGeofencingClient = null
+        Log.i(TAG, "onDetachedContext before stopLocationUpdates")
+        stopLocationUpdates()
+        Log.i(TAG, "onDetachedContext after stopLocationUpdates")
     }
 
 
@@ -389,10 +393,16 @@ class GeofencingPlugin : ActivityAware, FlutterPlugin, MethodChannel.MethodCallH
 
     override fun onDetachedFromActivity() {
         mActivity = null
+        Log.i(TAG, "onDetachedFromActivity before stopLocationUpdates")
+        stopLocationUpdates()
+        Log.i(TAG, "onDetachedFromActivity after stopLocationUpdates")
     }
 
     override fun onDetachedFromActivityForConfigChanges() {
         mActivity = null
+        Log.i(TAG, "onDetachedFromActivityForConfigChanges before stopLocationUpdates")
+        stopLocationUpdates()
+        Log.i(TAG, "onDetachedFromActivityForConfigChanges after stopLocationUpdates")
     }
 
     override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
@@ -408,14 +418,15 @@ class GeofencingPlugin : ActivityAware, FlutterPlugin, MethodChannel.MethodCallH
                     return
                 }
                 val callbackHandle = args[0] as Long
-                val timeInterval = args[1] as Int
-                val fastestTimeInterval = args[2] as Int
-                val smallestDisplacement = (args[3] as Number).toFloat()
-                
-                Log.d(TAG, timeInterval.toString())
-                Log.d(TAG, smallestDisplacement.toString())
 
-                initializeService(callbackHandle, timeInterval, fastestTimeInterval, smallestDisplacement)
+                LOCATION_UPDATE_INTERVAL = (args[1] as Int) * 1L
+                LOCATION_UPDATE_FASTEST_INTERVAL = (args[2] as Int) * 1L
+                LOCATION_UPDATE_SMALLEST_DISPLACEMENT = (args[3] as Number).toFloat()
+                
+                Log.d(TAG, LOCATION_UPDATE_INTERVAL.toString())
+                Log.d(TAG, LOCATION_UPDATE_SMALLEST_DISPLACEMENT.toString())
+
+                initializeService(callbackHandle)
                 result.success(null)
             }
             "GeofencingPlugin.registerGeofence" -> {
@@ -447,14 +458,14 @@ class GeofencingPlugin : ActivityAware, FlutterPlugin, MethodChannel.MethodCallH
         }
     }
 
+    private var LOCATION_UPDATE_INTERVAL: Long = 60 * 30 * 1000L
+    private var LOCATION_UPDATE_FASTEST_INTERVAL: Long = 60 * 30 * 1000L
+    private var LOCATION_UPDATE_SMALLEST_DISPLACEMENT: Float = 10f
+
     private lateinit var mFusedLocationClient: FusedLocationProviderClient
     private lateinit var mLocationCallback: LocationCallback
 
-    private fun initializeLocationUpdates(
-        timeInterval: Int,
-        fastestTimeInterval: Int,
-        smallestDisplacement: Float,
-    ) {
+    private fun initializeLocationUpdates() {
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(mActivity!!)
 
         mLocationCallback = object : LocationCallback() {
@@ -466,18 +477,14 @@ class GeofencingPlugin : ActivityAware, FlutterPlugin, MethodChannel.MethodCallH
             }
         }
 
-        startLocationUpdates(timeInterval, fastestTimeInterval, smallestDisplacement)
+        startLocationUpdates()
     }
 
-    private fun startLocationUpdates(
-        timeInterval: Int,
-        fastestTimeInterval: Int,
-        smallestDisplacement: Float,
-    ) {
+    private fun startLocationUpdates() {
         val locationRequest = LocationRequest.create()
-            .setInterval(timeInterval * 1L)
-            .setFastestInterval(fastestTimeInterval * 1L)
-            .setSmallestDisplacement(smallestDisplacement)
+            .setInterval(LOCATION_UPDATE_INTERVAL)
+            .setFastestInterval(LOCATION_UPDATE_FASTEST_INTERVAL)
+            .setSmallestDisplacement(LOCATION_UPDATE_SMALLEST_DISPLACEMENT)
             .setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY)
 
         try {
