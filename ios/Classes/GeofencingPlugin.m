@@ -69,6 +69,8 @@ static BOOL backgroundIsolateRun = NO;
     result(@([self removeGeofence:arguments]));
   } else if ([@"GeofencingPlugin.getRegisteredGeofenceIds" isEqualToString:call.method]) {
       result([self getMonitoredRegionIds:arguments]);
+  } else if ([@"GeofencingService.stopBackgroundLocationUpdatesForUndroid" isEqualToString:call.method]) {
+    result(nil);
   }
   else {
     result(FlutterMethodNotImplemented);

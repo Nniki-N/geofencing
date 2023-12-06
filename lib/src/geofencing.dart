@@ -127,6 +127,10 @@ class GeofencingManager {
     }
   }
 
+  /// stop background locattion udates for adnroid
+  static Future<void> stopBackgroundLocationUpdatesForUndroid() async =>
+      await _channel.invokeMethod('GeofencingPlugin.stopBackgroundLocationUpdatesForUndroid');
+
   /// Promote the geofencing service to a foreground service.
   ///
   /// Will throw an exception if called anywhere except for a geofencing

@@ -4,6 +4,9 @@
 
 package io.flutter.plugins.geofencing
 
+import android.location.LocationListener
+import android.location.LocationManager
+
 import android.os.Bundle
 import android.os.Looper
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -79,6 +82,7 @@ class GeofencingPlugin : ActivityAware, FlutterPlugin, MethodChannel.MethodCallH
         mActivity?.let { activity ->
             Log.d(TAG, "initializeService before initializeLocationUpdates")
             initializeLocationUpdates()
+            // startLocationUpdates()
             Log.d(TAG, "initializeService after initializeLocationUpdates")
         }
     }
@@ -266,6 +270,7 @@ class GeofencingPlugin : ActivityAware, FlutterPlugin, MethodChannel.MethodCallH
 
             Log.d(TAG, "reRegisterAfterReboot before initializeLocationUpdates")
             initializeLocationUpdates()
+            // startLocationUpdates()
             Log.d(TAG, "reRegisterAfterReboot after initializeLocationUpdates")
         }
     }
@@ -454,34 +459,50 @@ class GeofencingPlugin : ActivityAware, FlutterPlugin, MethodChannel.MethodCallH
             "GeofencingPlugin.getRegisteredGeofenceIds" -> getRegisteredGeofenceIds(
                 result
             )
+            "GeofencingPlugin.stopBackgroundLocationUpdatesForUndroid" -> {
+                stopLocationUpdates()
+            }
             else -> result.notImplemented()
         }
     }
 
     private var LOCATION_UPDATE_INTERVAL: Long = 60 * 30 * 1000L
     private var LOCATION_UPDATE_FASTEST_INTERVAL: Long = 60 * 30 * 1000L
-    private var LOCATION_UPDATE_SMALLEST_DISPLACEMENT: Float = 10f
+    private var LOCATION_UPDATE_SMALLEST_DISPLACEMENT: Float = 0f
 
     private lateinit var mFusedLocationClient: FusedLocationProviderClient
-    private lateinit var mLocationCallback: LocationCallback
-
-    private fun initializeLocationUpdates() {
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(mActivity!!)
-
-        mLocationCallback = object : LocationCallback() {
+    private val mLocationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 locationResult.lastLocation?.let { location ->
-                    Log.i(TAG, "Location Update: $location")
-                    showLocationNotification(location)
+                    val highAccuracyLocationRequest = LocationRequest.create()
+                        .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+
+                    val locationCallback = object : LocationCallback() {
+                        override fun onLocationResult(locationResult: LocationResult) {
+                            Log.i(TAG, "Location inner Update: $location, Time: ${location.time}")
+                            showLocationNotification(location)
+                            mFusedLocationClient.removeLocationUpdates(this)
+                        }
+                    }
+
+                    // Request a single high-accuracy location update
+                    mFusedLocationClient.requestLocationUpdates(
+                        highAccuracyLocationRequest,
+                        locationCallback,
+                        null
+                    )
                 }
             }
         }
+
+    private fun initializeLocationUpdates() {
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(mActivity!!)
 
         startLocationUpdates()
     }
 
     private fun startLocationUpdates() {
-        val locationRequest = LocationRequest.create()
+        val locationRequest = LocationRequest()
             .setInterval(LOCATION_UPDATE_INTERVAL)
             .setFastestInterval(LOCATION_UPDATE_FASTEST_INTERVAL)
             .setSmallestDisplacement(LOCATION_UPDATE_SMALLEST_DISPLACEMENT)
@@ -499,7 +520,9 @@ class GeofencingPlugin : ActivityAware, FlutterPlugin, MethodChannel.MethodCallH
     }
 
     private fun stopLocationUpdates() {
+        Log.i(TAG, "stopLocationUpdates stopLocationUpdates")
         mFusedLocationClient.removeLocationUpdates(mLocationCallback)
+        Log.i(TAG, "stopLocationUpdates stopLocationUpdates finished")
     }
 
     private fun showLocationNotification(location: Location) {
