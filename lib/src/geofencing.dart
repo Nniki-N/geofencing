@@ -1,11 +1,9 @@
 // Copyright 2018 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
-
 import 'package:flutter/services.dart';
 import 'package:geofencing/src/callback_dispatcher.dart';
 import 'package:geofencing/src/location.dart';
@@ -70,7 +68,6 @@ class GeofenceRegion {
 
   /// Android specific settings for a geofence.
   final AndroidGeofencingSettings androidSettings;
-
   GeofenceRegion(
     this.id,
     double latitude,
@@ -79,7 +76,6 @@ class GeofenceRegion {
     this.triggers,
     this.androidSettings,
   ) : location = Location(latitude, longitude);
-
   List<dynamic> _toArgs() {
     final int triggerMask = triggers.fold(
         0, (int trigger, GeofenceEvent e) => (geofenceEventToInt(e) | trigger));
@@ -104,32 +100,14 @@ class GeofencingManager {
       MethodChannel('plugins.flutter.io/geofencing_plugin_background');
 
   /// Initialize the plugin and request relevant permissions from the user.
-  /// [androidTimeInterval] is set in milliseconds. By default 5000 milliseconds
-  /// [androidFastestTimeInterval] is set in milliseconds. By default 5000 milliseconds
-  /// [androidSmallestDisplacement] is set in meters. By default 0
-  static Future<void> initialize({
-    int androidTimeInterval = 5000,
-    int androidFastestTimeInterval = 5000,
-    double androidSmallestDisplacement = 0,
-  }) async {
+  static Future<void> initialize() async {
     final CallbackHandle? callback =
         PluginUtilities.getCallbackHandle(callbackDispatcher);
     if (callback != null) {
-      await _channel.invokeMethod(
-        'GeofencingPlugin.initializeService',
-        <dynamic>[
-          callback.toRawHandle(),
-          androidTimeInterval,
-          androidFastestTimeInterval,
-          androidSmallestDisplacement,
-        ],
-      );
+      await _channel.invokeMethod('GeofencingPlugin.initializeService',
+          <dynamic>[callback.toRawHandle()]);
     }
   }
-
-  /// stop background locattion udates for adnroid
-  static Future<void> stopBackgroundLocationUpdatesForUndroid() async =>
-      await _channel.invokeMethod('GeofencingPlugin.stopBackgroundLocationUpdatesForUndroid');
 
   /// Promote the geofencing service to a foreground service.
   ///
@@ -178,8 +156,10 @@ class GeofencingManager {
 
   /// Stop receiving geofence events for a given [GeofenceRegion].
   static Future<void> removeGeofence(GeofenceRegion region) async {
-    await removeGeofenceById(region.id);
+    if (region != null) {
+      await removeGeofenceById(region.id);
     }
+  }
 
   /// Stop receiving geofence events for an identifier associated with a
   /// geofence region.

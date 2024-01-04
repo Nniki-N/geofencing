@@ -44,7 +44,7 @@ static BOOL backgroundIsolateRun = NO;
 - (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
   NSArray *arguments = call.arguments;
   if ([@"GeofencingPlugin.initializeService" isEqualToString:call.method]) {
-    NSAssert(arguments.count >= 1,
+    NSAssert(arguments.count == 1,
              @"Invalid argument count for 'GeofencingPlugin.initializeService'");
     [self startGeofencingService:[arguments[0] longValue]];
     result(@(YES));
@@ -69,8 +69,6 @@ static BOOL backgroundIsolateRun = NO;
     result(@([self removeGeofence:arguments]));
   } else if ([@"GeofencingPlugin.getRegisteredGeofenceIds" isEqualToString:call.method]) {
       result([self getMonitoredRegionIds:arguments]);
-  } else if ([@"GeofencingService.stopBackgroundLocationUpdatesForUndroid" isEqualToString:call.method]) {
-    result(nil);
   }
   else {
     result(FlutterMethodNotImplemented);
@@ -145,7 +143,7 @@ static BOOL backgroundIsolateRun = NO;
   _eventQueue = [[NSMutableArray alloc] init];
   _locationManager = [[CLLocationManager alloc] init];
   [_locationManager setDelegate:self];
-  [_locationManager requestAlwaysAuthorization];
+  // [_locationManager requestAlwaysAuthorization];
   _locationManager.allowsBackgroundLocationUpdates = YES;
   _locationManager.distanceFilter = 20.0;
   _locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters;

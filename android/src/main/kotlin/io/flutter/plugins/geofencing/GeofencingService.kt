@@ -1,7 +1,6 @@
 // Copyright 2018 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-
 package io.flutter.plugins.geofencing
 
 import android.content.Context
@@ -25,18 +24,14 @@ import io.flutter.view.FlutterRunArguments
 import java.util.ArrayDeque
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.UUID
-
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.embedding.engine.dart.DartExecutor.DartCallback
-
 import com.google.android.gms.location.GeofencingEvent
-
 class GeofencingService : MethodCallHandler, JobIntentService() {
     private val queue = ArrayDeque<List<Any>>()
     private lateinit var mBackgroundChannel: MethodChannel
     private lateinit var mContext: Context
-
     companion object {
         @JvmStatic
         private val TAG = "GeofencingService"
@@ -52,18 +47,15 @@ class GeofencingService : MethodCallHandler, JobIntentService() {
 
         @JvmStatic
         private lateinit var sPluginRegistrantCallback: PluginRegistrantCallback
-
         @JvmStatic
         fun enqueueWork(context: Context, work: Intent) {
             enqueueWork(context, GeofencingService::class.java, JOB_ID, work)
         }
-
         @JvmStatic
         fun setPluginRegistrant(callback: PluginRegistrantCallback) {
             sPluginRegistrantCallback = callback
         }
     }
-
     private fun startGeofencingService(context: Context) {
         synchronized(sServiceStarted) {
             mContext = context
@@ -86,9 +78,7 @@ class GeofencingService : MethodCallHandler, JobIntentService() {
                     Log.e(TAG, "Fatal: failed to find callback")
                     return
                 }
-                
                 Log.i(TAG, "Starting GeofencingService...")
-
                 val args = DartCallback(
                     context.getAssets(),
                     FlutterMain.findAppBundlePath(context)!!,
@@ -105,7 +95,7 @@ class GeofencingService : MethodCallHandler, JobIntentService() {
         mBackgroundChannel.setMethodCallHandler(this)
     }
 
-     @RequiresApi(Build.VERSION_CODES.O)
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onMethodCall(call: MethodCall, result: Result) {
         when (call.method) {
             "GeofencingService.initialized" -> {
@@ -128,7 +118,6 @@ class GeofencingService : MethodCallHandler, JobIntentService() {
         }
         result.success(null)
     }
-
     override fun onCreate() {
         super.onCreate()
         startGeofencingService(this)
@@ -142,7 +131,6 @@ class GeofencingService : MethodCallHandler, JobIntentService() {
             Log.e(TAG, "Geofencing error: ${geofencingEvent.errorCode}")
             return
         }
-        
         // Get the transition type.
         val geofenceTransition = geofencingEvent.geofenceTransition
 
@@ -179,7 +167,4 @@ class GeofencingService : MethodCallHandler, JobIntentService() {
             }
         }
     }
-
-    
-    
 }
