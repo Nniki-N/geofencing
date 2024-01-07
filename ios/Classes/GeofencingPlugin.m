@@ -144,9 +144,17 @@ static BOOL backgroundIsolateRun = NO;
   _locationManager = [[CLLocationManager alloc] init];
   [_locationManager setDelegate:self];
   // [_locationManager requestAlwaysAuthorization];
-  _locationManager.allowsBackgroundLocationUpdates = YES;
-  _locationManager.distanceFilter = 20.0;
-  _locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters;
+  // _locationManager.allowsBackgroundLocationUpdates = YES;
+  // _locationManager.distanceFilter = 20.0;
+  // _locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters;
+  if ([CLLocationManager locationServicesEnabled]) {
+    CLAuthorizationStatus status = [CLLocationManager authorizationStatus];
+    if (status == kCLAuthorizationStatusAuthorizedAlways) {
+        _locationManager.allowsBackgroundLocationUpdates = YES;
+        _locationManager.distanceFilter = 20.0;
+        _locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters;
+    }
+  }
 
   _headlessRunner = [[FlutterEngine alloc] initWithName:@"GeofencingIsolate" project:nil allowHeadlessExecution:YES];
   _registrar = registrar;
