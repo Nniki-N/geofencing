@@ -46,6 +46,15 @@ static BOOL backgroundIsolateRun = NO;
   if ([@"GeofencingPlugin.initializeService" isEqualToString:call.method]) {
     NSAssert(arguments.count == 1,
              @"Invalid argument count for 'GeofencingPlugin.initializeService'");
+
+    if ([CLLocationManager locationServicesEnabled]) {
+      CLAuthorizationStatus status = [CLLocationManager authorizationStatus];
+      if (status == kCLAuthorizationStatusAuthorizedAlways) {
+          _locationManager.allowsBackgroundLocationUpdates = YES;
+          _locationManager.distanceFilter = 20.0;
+          _locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters;
+      }
+    }
     [self startGeofencingService:[arguments[0] longValue]];
     result(@(YES));
   } else if ([@"GeofencingService.initialized" isEqualToString:call.method]) {
@@ -147,14 +156,14 @@ static BOOL backgroundIsolateRun = NO;
   // _locationManager.allowsBackgroundLocationUpdates = YES;
   // _locationManager.distanceFilter = 20.0;
   // _locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters;
-  if ([CLLocationManager locationServicesEnabled]) {
-    CLAuthorizationStatus status = [CLLocationManager authorizationStatus];
-    if (status == kCLAuthorizationStatusAuthorizedAlways) {
-        _locationManager.allowsBackgroundLocationUpdates = YES;
-        _locationManager.distanceFilter = 20.0;
-        _locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters;
-    }
-  }
+  // if ([CLLocationManager locationServicesEnabled]) {
+  //   CLAuthorizationStatus status = [CLLocationManager authorizationStatus];
+  //   if (status == kCLAuthorizationStatusAuthorizedAlways) {
+  //       _locationManager.allowsBackgroundLocationUpdates = YES;
+  //       _locationManager.distanceFilter = 20.0;
+  //       _locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters;
+  //   }
+  // }
 
   _headlessRunner = [[FlutterEngine alloc] initWithName:@"GeofencingIsolate" project:nil allowHeadlessExecution:YES];
   _registrar = registrar;
